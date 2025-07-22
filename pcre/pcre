@@ -1,0 +1,207 @@
+#!/usr/bin/perl
+
+use v5.014;
+use warnings;
+use strict;
+use Time::HiRes qw/time/;
+
+my $version = "0.1.0";
+sub Version {
+	say "v$version";
+}
+
+sub Usage($$) {
+	my ($code, $msg) = @_;
+
+	if ( defined $msg ) {
+		say $msg;
+	}
+
+my$text = <<"EOF";
+ NAME
+	pcre - run a list of PCRE regexes across a data set
+
+SYNOPSIS
+	pcre --regex REGEX_LIST --data FILE [ --alpha | --desc ]
+	pcre --version | --help
+
+DESCRIPTION
+	--regex   Specify the location of the regex list.
+	--data    Specify the location of the data set.
+
+	By default, results are printed in the order listed in REGEX_LIST. The result
+        output can be modified with these two flags
+
+	--alpha   Results will be printed with regex names from REGEX_LIST listed
+                  alphabetically
+	--desc    Results will be printed with hit counts listed in descending order
+
+	--help    Display this usage text and exit
+	--version Display the program version and exit
+
+EOF
+
+	print $text;
+	exit $code;
+}
+
+# Open a file and return the file handle. Exit on error. Pass in
+# fileName = @_[0], and mode = @_[1]
+#
+sub OpenFile($$) {
+	my ($name, $mode) = @_;
+
+	my $fh;
+	if ( $mode =~ /^<$/ ) {
+		open($fh, $mode, $name) or die "$name: $!";
+	} elsif ( $mode =~ /^>$/ ) {
+		my $trunc = 0;
+		if ( -e $name ) {
+			$trunc = 1;
+		}
+
+		open($fh, $mode, $name) or die "$name: $!";
+		if ( $trunc ) {
+			truncate $fh, 0;
+		}
+	}
+
+	return $fh;
+}
+
+# Read in the regex ruleset to evaluate. The file format is
+#     # comment
+#     regexName \t regex
+#
+# %r contains the regex name (as key) and the precompiled regex (qr//) as value
+# @seq contains the sequence which the regexes were read in (by name).
+#  hash[regexName] = sequence number. Used for quick sequence number lookup.
+# $sequencedRegexes contains the regex names in the sequence they were read in.
+#  Used to iterate the regexes in the corect sequence
+#
+sub LoadRegexList($) {
+	my $fileName = shift;
+	my (%r, %seq);
+	my $lineCount = 1;
+
+	my $fh = OpenFile($fileName, "<");
+	while ( <$fh> ) {
+		next if /^#/;
+		chomp;
+		my ($regName, $regex) = split("\t", $_);
+		$r{$regName} = qr/$regex/;
+		$seq{$regName}=$lineCount;
+		$lineCount++
+	}
+	close($fh);
+
+	my $sequencedRegexes = FormRuleSequence(\%seq);
+	return \%r, \%seq, $sequencedRegexes;
+}
+
+
+sub FormRuleSequence($) {
+	my ( $hash ) = shift;
+	my @regexNames;
+	# sort descending
+	foreach my $name ( sort { $hash->{$a} <=> $hash->{$b} } keys %{$hash} ) {
+		push @regexNames, $name;
+	}
+
+	return \@regexNames;
+}
+
+sub GetCommandLine($) {
+	my ( $opt ) = @_;
+
+	use Getopt::Long;
+
+	GetOptions(
+		"alpha"      => \$opt->{alpha}, # results printed by alphabetical regex name
+		"desc"       => \$opt->{desc},  # results printed by hit count, descending order
+
+		"nomatch"    => \$opt->{nomatch}, # file to drop in the data that does not match
+		"r|regex=s"  => \$opt->{regex},
+		"d|data=s"   => \$opt->{data},
+
+		"h|help"     => \$opt->{help},
+		"v|version"  => \$opt->{version},
+	);
+
+	Version and exit if ( $opt->{version} );
+	Usage(0,'') if ( $opt->{help} );
+	Usage(1,'--regex is required') unless $opt->{regex};
+	Usage(1,'--data is required') unless $opt->{data};
+
+	# defaults can be set
+	#$opt->{regex} = "path/to/regex.list" unless $opt->{regex};
+	#$opt->{data}  = "path/to/data.txt" unless $opt->{data};
+	$opt->{nomatch}  = "unmatched.txt" unless $opt->{nomatch};
+
+	if ( $opt->{alpha} && $opt->{desc} ) {
+		Usage(1, q/only one of --alpha or --desc may be selected/);
+	}
+}
+
+sub main {
+	my %opt;
+	GetCommandLine(\%opt);
+	my ($testReg, $seq, $sequencedRegexes)  = LoadRegexList($opt{regex});
+	my $dataFh = OpenFile($opt{data}, "<");
+	my $nomatch = OpenFile($opt{nomatch}, ">");
+
+	my %stats;
+	# set all stats counts to 0
+	foreach my $k (keys %{$testReg}) {
+		$stats{$k} = 0
+	}
+
+	my ($lineCount, $matchedCount,  $unmatchedCount) = (0, 0, 0);
+
+	my $start = time();
+	NEXT_LINE:
+	while ( my $line = <$dataFh> ) {
+		$line =~ s/\n$//;
+		my $match = 0;
+		$lineCount++;
+		foreach my $regName (@$sequencedRegexes) {
+			if ( $line =~ /$testReg->{$regName}/ ) {
+				$stats{$regName}++;
+				$match = 1;
+				$matchedCount++;
+				goto NEXT_LINE;
+			}
+		}
+
+		$unmatchedCount++;
+		printf $nomatch "$line\n";
+	}
+
+	my $end = time();
+	close $dataFh;
+	close $nomatch;
+
+	printf "%8d : data lines read in\n", $lineCount;
+	printf "%8d : matched lines\n", $matchedCount;
+	printf "%8d : unmatched lines\n\n", $unmatchedCount;
+
+	printf " SEQ    COUNT  REGEX\n";
+	if ( defined $opt{alpha} ) {
+		my @list = sort @$sequencedRegexes;
+		foreach my $v ( @list ) {
+			printf "%4d %8d  %s\n", $seq->{$v}, $stats{$v}, $v;
+		}
+	} elsif ( defined $opt{desc} ) {
+		foreach my $regex ( sort { $stats{$b} <=> $stats{$a} } keys %stats ) {
+			printf "%4d %8d  %s\n", $seq->{$regex}, $stats{$regex}, $regex;
+		}
+	} else {
+		foreach my $regex ( @$sequencedRegexes ) {
+			printf "%4d %8d  %s\n", $seq->{$regex}, $stats{$regex}, $regex;
+		}
+	}
+
+	printf "\n%.3f seconds elasped\n", $end - $start;
+}
+
+main;
