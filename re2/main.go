@@ -62,10 +62,11 @@ func LoadRegexList(fileName string) (map[string]*regexp.Regexp, map[string]int, 
 	seq := make(map[string]int)
 	var sequencedRegexes []string
 
+	comment := regexp.MustCompile(`^#`)
 	scanner := bufio.NewScanner(regexFh)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if match, _ := regexp.MatchString(`^#`, line); match {
+		if match := comment.FindString(line); match != "" {
 			continue
 		}
 		lineCount++
