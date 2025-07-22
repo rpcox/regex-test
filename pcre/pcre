@@ -120,7 +120,7 @@ sub GetCommandLine($) {
 		"alpha"      => \$opt->{alpha}, # results printed by alphabetical regex name
 		"desc"       => \$opt->{desc},  # results printed by hit count, descending order
 
-		"nomatch"    => \$opt->{nomatch}, # file to drop in the data that does not match
+		"nomatch=s"  => \$opt->{nomatch}, # file to drop in the data that does not match
 		"r|regex=s"  => \$opt->{regex},
 		"d|data=s"   => \$opt->{data},
 
