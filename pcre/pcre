@@ -89,7 +89,9 @@ sub LoadRegexList($) {
 		next if /^#/;
 		chomp;
 		my ($regName, $regex) = split("\t", $_);
-		$r{$regName} = qr/$regex/;
+		$r{$regName}{regex} = qr/$regex/;
+		$r{$regName}{count} = 0;
+		$r{$regName}{seconds} = 0;
 		$seq{$regName}=$lineCount;
 		$lineCount++
 	}
@@ -146,15 +148,9 @@ sub GetCommandLine($) {
 sub main {
 	my %opt;
 	GetCommandLine(\%opt);
-	my ($testReg, $seq, $sequencedRegexes)  = LoadRegexList($opt{regex});
+	my ($regexTests, $seq, $sequencedRegexes)  = LoadRegexList($opt{regex});
 	my $dataFh = OpenFile($opt{data}, "<");
 	my $nomatch = OpenFile($opt{nomatch}, ">");
-
-	my %stats;
-	# set all stats counts to 0
-	foreach my $k (keys %{$testReg}) {
-		$stats{$k} = 0
-	}
 
 	my ($lineCount, $matchedCount,  $unmatchedCount) = (0, 0, 0);
 
@@ -164,9 +160,11 @@ sub main {
 		$line =~ s/\n$//;
 		my $match = 0;
 		$lineCount++;
+		my $lineStart = time();
 		foreach my $regName (@$sequencedRegexes) {
-			if ( $line =~ /$testReg->{$regName}/ ) {
-				$stats{$regName}++;
+			if ( $line =~ /$regexTests->{$regName}{regex}/ ) {
+				$regexTests->{$regName}{seconds} = (time() - $lineStart);
+				$regexTests->{$regName}{count}++;
 				$match = 1;
 				$matchedCount++;
 				goto NEXT_LINE;
@@ -181,27 +179,30 @@ sub main {
 	close $dataFh;
 	close $nomatch;
 
-	printf "%8d : data lines read in\n", $lineCount;
-	printf "%8d : matched lines\n", $matchedCount;
-	printf "%8d : unmatched lines\n\n", $unmatchedCount;
+	printf "SUMMARY\n\n";
+	printf "%6d : data lines read in\n", $lineCount;
+	printf "%6d : regexes loaded\n", scalar @{$sequencedRegexes};
+	printf "%6d : matched lines\n", $matchedCount;
+	printf "%6d : unmatched lines\n\n", $unmatchedCount;
 
-	printf " SEQ    COUNT  REGEX\n";
+	printf "MATCHES\n\n";
+	printf "%30s %4s %8s %11s\n", "REGEX", "SEQ", "HITS", "SECONDS";
 	if ( defined $opt{alpha} ) {
-		my @list = sort @$sequencedRegexes;
-		foreach my $v ( @list ) {
-			printf "%4d %8d  %s\n", $seq->{$v}, $stats{$v}, $v;
+		my @list = sort @{$sequencedRegexes};
+		foreach my $regName ( @list ) {
+			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	} elsif ( defined $opt{desc} ) {
-		foreach my $regex ( sort { $stats{$b} <=> $stats{$a} } keys %stats ) {
-			printf "%4d %8d  %s\n", $seq->{$regex}, $stats{$regex}, $regex;
+		foreach my $regName ( sort { $regexTests->{$b}{count} <=> $regexTests->{$a}{count} } keys %{$regexTests} ) {
+			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	} else {
-		foreach my $regex ( @$sequencedRegexes ) {
-			printf "%4d %8d  %s\n", $seq->{$regex}, $stats{$regex}, $regex;
+		foreach my $regName ( @{$sequencedRegexes} ) {
+			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	}
 
-	printf "\n%.3f seconds elasped\n", $end - $start;
+	printf "\n%.6f seconds elasped\n", $end - $start;
 }
 
 main;
