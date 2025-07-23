@@ -1,0 +1,29 @@
+<86>Jul  7 12:13:10 skynet sshd[9773]: pam_unix(sshd:session): session closed for user jdoe
+<86>Jul  7 12:13:10 skynet sshd[9788]: pam_unix(sshd:session): session closed for user jdoe
+<38>Jul 17 19:21:41 skynet sshd[61939]: Accepted password for jdoe from 192.168.145.176 port 63950 ssh2
+<86>Jul 17 19:21:41 skynet sshd[61939]: pam_unix(sshd:session): session opened for user jdoe(uid=1000) by (uid=0)
+<86>Jul 18 17:08:08 skynet sshd[61939]: pam_unix(sshd:session): session closed for user jdoe
+<38>Jul 19 13:13:04 skynet sshd[66962]: Accepted password for jdoe from 192.168.145.176 port 65249 ssh2
+<86>Jul 19 13:13:04 skynet sshd[66962]: pam_unix(sshd:session): session opened for user jdoe(uid=1000) by (uid=0)
+<38>Jul 19 13:13:25 skynet sshd[66964]: Received disconnect from 192.168.145.176 port 65249:11: disconnected by user
+<38>Jul 19 13:13:25 skynet sshd[66964]: Disconnected from user jdoe 192.168.145.176 port 65249
+<86>Jul 19 13:13:25 skynet sshd[66962]: pam_unix(sshd:session): session closed for user jdoe
+<132>1 2025-07-03T11:43:16.419470-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="631000"] INSTANCE loghost01-MASTER host transitioned to the 240 state with a priority of 240
+<132>1 2025-07-03T11:43:16.458999-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="631000"] INSTANCE loghost02-BACKUP host transitioned to the 230 state with a priority of 230
+<132>1 2025-07-03T11:43:31.475896-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="638500"] INSTANCE loghost01-MASTER host transitioned to the 240 state with a priority of 240
+<132>1 2025-07-03T11:52:18.980826-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="902000"] INSTANCE loghost02-BACKUP host transitioned to the 230 state with a priority of 230
+<132>1 2025-07-03T11:53:15.804880-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="930500"] INSTANCE loghost02-BACKUP host transitioned to the 230 state with a priority of 230
+<132>1 2025-07-03T11:56:21.908016-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="1023500"] INSTANCE loghost02-BACKUP host transitioned to the 230 state with a priority of 230
+<132>1 2025-07-03T11:57:10.891401-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="24000"] INSTANCE loghost02-BACKUP host transitioned to the 230 state with a priority of 230
+<85>Jul 20 06:46:38 skynet sshd[68712]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.145.176  user=jdoe
+<38>Jul 20 06:46:39 skynet sshd[68712]: Failed password for jdoe from 192.168.145.176 port 49664 ssh2
+<38>Jul 20 06:46:54 skynet sshd[68712]: Failed password for jdoe from 192.168.145.176 port 49664 ssh2
+<86>Jul 20 06:47:01 calvin CRON[302629]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+<78>Jul 20 06:47:01 calvin CRON[302630]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly ))
+<86>Jul 20 06:47:01 calvin CRON[302629]: pam_unix(cron:session): session closed for user root
+<86>Jul 20 06:47:01 skynet CRON[68716]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+<78>Jul 20 06:47:01 skynet CRON[68717]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly ))
+<86>Jul 20 06:47:01 skynet CRON[68716]: pam_unix(cron:session): session closed for user root
+<38>Jul 20 06:47:02 skynet sshd[68712]: Accepted password for jdoe from 192.168.145.176 port 49664 ssh2
+<86>Jul 20 06:47:02 skynet sshd[68712]: pam_unix(sshd:session): session opened for user jdoe(uid=1000) by (uid=0)
+<38>Jul 20 06:48:10 skynet sshd[68720]: Received disconnect from 192.168.145.176 port 49664:11: disconnected by user

@@ -1,0 +1,20 @@
+# <86>Jul  7 12:13:10 skynet sshd[9773]: pam_unix(sshd:session): session closed for user jdoe
+sshd-sesson-close-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ sshd[^p]+pam_unix[^\)]+\): session closed
+# <86>Jul 20 06:47:01 skynet CRON[68716]: pam_unix(cron:session): session closed for user roo
+# will pick up cron sessons
+#sshd-sesson-close-1	session closed [^ ]+ [^ ]+ \w+$
+# comment 2
+# <86>Jul 19 13:13:04 skynet sshd[66962]: pam_unix(sshd:session): session opened for user jdoe(uid=1000) by (uid=0)
+sshd-session-open-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ [^p]+pam_unix[^\)]+\): session opened
+# <38>Jul 19 13:13:25 skynet sshd[66964]: Disconnected from user jdoe 192.168.145.176 port 65249
+sshd-disconnect-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ [^:]+: Disconnected
+# <38>Jul 17 19:21:41 skynet sshd[61939]: Accepted password for jdoe from 192.168.145.176 port 63950 ssh2
+sshd-accept-passwd-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ [^:]+: Accepted password
+# <38>Jul 20 06:46:39 skynet sshd[68712]: Failed password for jdoe from 192.168.145.176 port 49664 ssh2vv
+sshd-failed-passwd-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ [^:]+: Failed password
+# <85>Jul 20 06:46:38 skynet sshd[68712]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.168.145.176  user=jdoe
+sshd-auth-fail-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ [^:]+: [^ ]+ authentication failure
+sshd-other	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ sshd
+cron-1	^[^ ]+ (\d| )\d [^ ]+ [^ ]+ CRON\[
+# <132>1 2025-07-03T11:43:16.419470-07:00 loghost01 kad-notify - - [timeQuality tzKnown="1" isSynced="1" syncAccuracy="631000"] INSTANCE loghost01-MASTER host transitioned to the 240 state with a priority of 240
+kad-notify-1	^[^ ]+ [^ ]+ [^ ]+ kad-notify
