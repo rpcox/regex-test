@@ -259,8 +259,6 @@ sub main {
 			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	}
-
-	printf "\n%.6f seconds elasped\n", $end - $start;
 }
 
 main;
