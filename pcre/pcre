@@ -5,9 +5,10 @@ use warnings;
 use strict;
 use Time::HiRes qw/time/;
 
-my $version = "0.1.0";
+my $tool = "pcre";
+my $version = "0.2.0";
 sub Version {
-	say "v$version";
+	say "$tool v$version";
 }
 
 sub Usage($$) {
@@ -22,26 +23,43 @@ my$text = <<"EOF";
 	pcre - run a list of PCRE regexes across a data set
 
 SYNOPSIS
-	pcre --regex REGEX_LIST --data FILE [ --alpha | --desc ]
+	pcre --regex REGEX_LIST --data FILE [ --alpha | --desc ] [ --dumpreg REGEX_NAME ] [ --unmatch FILE ]
 	pcre --version | --help
 
 DESCRIPTION
-	--regex   Specify the location of the regex list.
-	--data    Specify the location of the data set.
+    REQUIRED
+	--regex REGEX_LIST
+		Specify the location of the REGEX_LIST file
+	--data  FILE
+		Specify the location of the file containing the DATA set to test
+
+    OPTIONAL
+
+	--dumpreg REGEX_NAME
+		Specify which REGEX_NAME results to dump to a file. The file will be
+		named REGEX_NAME.txt
+
+	--unmatch FILE
+		Specify the name of the FILE where unmatched records will be placed.
+		The default name is 'unmatched.txt'
 
 	By default, results are printed in the order listed in REGEX_LIST. The result
-        output can be modified with these two flags
+        output can be modified with these next two flags
 
-	--alpha   Results will be printed with regex names from REGEX_LIST listed
-                  alphabetically
-	--desc    Results will be printed with hit counts listed in descending order
+	--alpha
+		Results will be printed with regex names from REGEX_LIST listed
+                alphabetically
+	--desc
+		Results will be printed with hit counts listed in descending order
 
-	--help    Display this usage text and exit
-	--version Display the program version and exit
+	--help
+		Display this usage text and exit
+	--version
+		Display the program version and exit
 
 EOF
 
-	print $text;
+	print STDERR $text;
 	exit $code;
 }
 
@@ -121,8 +139,9 @@ sub GetCommandLine($) {
 	GetOptions(
 		"alpha"      => \$opt->{alpha}, # results printed by alphabetical regex name
 		"desc"       => \$opt->{desc},  # results printed by hit count, descending order
+		"dumpreg=s"  => \$opt->{dumpreg}, # dump the records that match a particular regex
 
-		"nomatch=s"  => \$opt->{nomatch}, # file to drop in the data that does not match
+		"unmatch=s"  => \$opt->{unmatch}, # file to drop in the data that does not match
 		"r|regex=s"  => \$opt->{regex},
 		"d|data=s"   => \$opt->{data},
 
@@ -138,7 +157,7 @@ sub GetCommandLine($) {
 	# defaults can be set
 	#$opt->{regex} = "path/to/regex.list" unless $opt->{regex};
 	#$opt->{data}  = "path/to/data.txt" unless $opt->{data};
-	$opt->{nomatch}  = "unmatched.txt" unless $opt->{nomatch};
+	$opt->{unmatch}  = "unmatched.txt" unless $opt->{unmatch};
 
 	if ( $opt->{alpha} && $opt->{desc} ) {
 		Usage(1, q/only one of --alpha or --desc may be selected/);
@@ -150,7 +169,26 @@ sub main {
 	GetCommandLine(\%opt);
 	my ($regexTests, $seq, $sequencedRegexes)  = LoadRegexList($opt{regex});
 	my $dataFh = OpenFile($opt{data}, "<");
-	my $nomatch = OpenFile($opt{nomatch}, ">");
+	my $unmatch = OpenFile($opt{unmatch}, ">");
+	my $dumpFh;
+	if ( defined $opt{dumpreg} ) {
+		my $match = 0;
+		my $dumpregFile = $opt{dumpreg} . ".txt";
+		foreach my $regName ( @{$sequencedRegexes} ) {
+			if ( $regName =~ /$opt{dumpreg}/ ) {
+				$dumpFh = OpenFile($dumpregFile, ">");
+				$match = 1;
+				last;
+			}
+		}
+
+		if ( ! $match ) {
+			printf STDERR "no matching regex name found for '$opt{dumpreg}'. nothing to dump\n";
+			undef $opt{dumpreg};
+		} else {
+			printf STDERR "dumping '$opt{dumpreg}' to $dumpregFile\n"
+		}
+	}
 
 	my ($lineCount, $matchedCount,  $unmatchedCount) = (0, 0, 0);
 
@@ -167,23 +205,43 @@ sub main {
 				$regexTests->{$regName}{count}++;
 				$match = 1;
 				$matchedCount++;
+				if ( defined $opt{dumpreg} && $regName =~ /$opt{dumpreg}/ ) {
+					printf $dumpFh "$line\n";
+				}
 				goto NEXT_LINE;
 			}
 		}
 
 		$unmatchedCount++;
-		printf $nomatch "$line\n";
+		printf $unmatch "$line\n";
 	}
 
 	my $end = time();
 	close $dataFh;
-	close $nomatch;
+	close $unmatch;
+	if ( defined $opt{dumpreg} ) {
+		close $dumpFh;
+	}
+
+	my $matchSum = 0;
+	foreach my $k ( keys %{$regexTests} ) {
+		if ( defined $regexTests->{$k}{count} && $regexTests->{$k}{count} > 0 ) {
+			$matchSum += $regexTests->{$k}{count};
+		}
+	}
 
 	printf "SUMMARY\n\n";
-	printf "%6d : data lines read in\n", $lineCount;
-	printf "%6d : regexes loaded\n", scalar @{$sequencedRegexes};
-	printf "%6d : matched lines\n", $matchedCount;
-	printf "%6d : unmatched lines\n\n", $unmatchedCount;
+	use DateTime;
+	my $dt = DateTime->now;
+	printf "  run date: %20s\n\n", $dt;
+	printf "%10.6f : elapsed total (seconds)\n", $end - $start;
+	printf "%10d : data lines read in\n", $lineCount;
+	printf "%10d : regexes loaded\n", scalar @{$sequencedRegexes};
+	printf "%10d : matched lines\n", $matchSum;
+	if ( $matchSum != $matchedCount ) {
+		printf STDERR "\t!!\$matchSum ($matchSum) != \$matchedCount ($matchedCount)\n";
+	}
+	printf "%10d : unmatched lines\n\n", $unmatchedCount;
 
 	printf "MATCHES\n\n";
 	printf "%30s %4s %8s %11s\n", "REGEX", "SEQ", "HITS", "SECONDS";
