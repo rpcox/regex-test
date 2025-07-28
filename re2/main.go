@@ -175,21 +175,19 @@ NEXT_LINE:
 	}
 	fmt.Printf("%10d : unmatched lines\n\n", unmatchedCount)
 	fmt.Printf("MATCHES\n\n")
-	fmt.Printf("%30s %8s %8s %11s\n", "REGEX", "ORD", "HITS", "DURATION")
+	fmt.Printf("%30s %8s %8s   %11s\n", "REGEX", "ORD", "HITS", "DURATION")
 
+	var sp *[]string
 	if *_alpha {
-		for _, regName := range *SortByKey(regexMap) {
-			fmt.Printf("%30s %8d %8d    %10.6f\n", regName, regexMap[regName].Sequence, regexMap[regName].HitCount, regexMap[regName].Elapsed.Seconds())
-		}
-
+		sp = SortByKey(regexMap)
 	} else if *_desc {
-		for _, regName := range *SortByHitCount(regexMap) {
-			fmt.Printf("%30s %8d %8d    %10.6f\n", regName, regexMap[regName].Sequence, regexMap[regName].HitCount, regexMap[regName].Elapsed.Seconds())
-		}
+		sp = SortByHitCount(regexMap)
 	} else {
-		for _, regName := range *regexSequence {
-			fmt.Printf("%30s %8d %8d    %10.6f\n", regName, regexMap[regName].Sequence, regexMap[regName].HitCount, regexMap[regName].Elapsed.Seconds())
-		}
+		sp = regexSequence
+	}
+
+	for _, regName := range *sp {
+		fmt.Printf("%30s %8d %8d    %10.6f\n", regName, regexMap[regName].Sequence, regexMap[regName].HitCount, regexMap[regName].Elapsed.Seconds())
 	}
 	fmt.Println()
 }
