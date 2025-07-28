@@ -6,7 +6,7 @@ use strict;
 use Time::HiRes qw/time/;
 
 my $tool = "pcre";
-my $version = "0.2.0";
+my $version = "0.2.1";
 sub Version {
 	say "$tool v$version";
 }
@@ -233,7 +233,7 @@ sub main {
 	printf "SUMMARY\n\n";
 	use DateTime;
 	my $dt = DateTime->now;
-	printf "  run date: %20s\n\n", $dt;
+	printf "  run date : %20s\n", $dt;
 	printf "%10.6f : elapsed total (seconds)\n", $end - $start;
 	printf "%10d : data lines read in\n", $lineCount;
 	printf "%10d : regexes loaded\n", scalar @{$sequencedRegexes};
@@ -244,21 +244,23 @@ sub main {
 	printf "%10d : unmatched lines\n\n", $unmatchedCount;
 
 	printf "MATCHES\n\n";
-	printf "%30s %4s %8s %11s\n", "REGEX", "SEQ", "HITS", "SECONDS";
+	printf "%30s %8s %8s   %11s\n", "REGEX", "ORD", "HITS", "DURATION";
 	if ( defined $opt{alpha} ) {
 		my @list = sort @{$sequencedRegexes};
 		foreach my $regName ( @list ) {
-			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
+			printf "%30s %8d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	} elsif ( defined $opt{desc} ) {
 		foreach my $regName ( sort { $regexTests->{$b}{count} <=> $regexTests->{$a}{count} } keys %{$regexTests} ) {
-			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
+			printf "%30s %8d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	} else {
 		foreach my $regName ( @{$sequencedRegexes} ) {
-			printf "%30s %4d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
+			printf "%30s %8d %8d %11.9f\n", $regName, $seq->{$regName}, $regexTests->{$regName}{count}, $regexTests->{$regName}{seconds};
 		}
 	}
+
+	say ' '
 }
 
 main;
