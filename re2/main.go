@@ -115,8 +115,9 @@ func SortByHitCount(m map[string]*RegexData) *[]string {
 }
 
 func main() {
-	_alpha := flag.Bool("alpha", false, "Results will be printed with regex names from REGEX_LIST listed alphabetically")
-	_desc := flag.Bool("desc", false, "Results will be printed with hit counts listed in descending order")
+	_alpha := flag.Bool("alpha", false, "Results will be printed by alphabetical REGEX_NAME")
+	_desc := flag.Bool("desc", false, "Results will be printed with regex hit counts listed in descending order")
+	_dumpreg := flag.String("dumpreg", "", "Dump the records that match a particular regex")
 	_data := flag.String("data", "", "Specify the location of the data set")
 	_regex := flag.String("regex", "", "Specify the location of the regex list")
 	_unmatch := flag.String("unmatch", "unmatched.txt", "Specify the location to place unmatched data")
@@ -124,6 +125,7 @@ func main() {
 	_ver := flag.Bool("version", false, "Display version and exit")
 	flag.Parse()
 	HelpVerCheck(*_ver, *_help)
+	exit.If(*_alpha && *_desc, "-alpha and -desc are mutually exclusive", 1)
 
 	umFh, err := os.OpenFile(*_unmatch, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
 	exit.IfErr(err, 1)
@@ -131,12 +133,25 @@ func main() {
 	dataFh, err := os.OpenFile(*_data, os.O_RDONLY, 0640)
 	exit.IfErr(err, 1)
 	defer dataFh.Close()
-	scanner := bufio.NewScanner(dataFh)
 
 	regexMap, regexSequence := LoadRegexList(*_regex)
+	var dumpFh *os.File
+	if *_dumpreg != "" {
+		fileName := *_dumpreg + ".txt"
+		if _, ok := regexMap[*_dumpreg]; ok {
+			dumpFh, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0640)
+			exit.IfErr(err, 1)
+			fmt.Printf("dumping '%s' to %s\n", *_dumpreg, fileName)
+		} else {
+			fmt.Fprintf(os.Stderr, "no matching regex name found for '$opt{dumpreg}'. nothing to dump\n")
+			_dumpreg = nil
+		}
+	}
+
 	lineCount, matchCount, unmatchedCount := 0, 0, 0
 	start := time.Now()
 
+	scanner := bufio.NewScanner(dataFh)
 NEXT_LINE:
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -147,6 +162,9 @@ NEXT_LINE:
 				regexMap[regName].Elapsed += time.Since(lineStart)
 				regexMap[regName].HitCount++
 				matchCount++
+				if _dumpreg != nil && regName == *_dumpreg {
+					dumpFh.WriteString(line + "\n")
+				}
 				goto NEXT_LINE
 			}
 		}
