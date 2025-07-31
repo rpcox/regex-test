@@ -22,11 +22,11 @@ my$text = <<"EOF";
  NAME
 	pcre - run a list of PCRE regexes across a data set
 
-SYNOPSIS
+ SYNOPSIS
 	pcre --regex REGEX_LIST --data FILE [ --alpha | --desc ] [ --dumpreg REGEX_NAME ] [ --unmatch FILE ]
 	pcre --version | --help
 
-DESCRIPTION
+ DESCRIPTION
     REQUIRED
 	--regex REGEX_LIST
 		Specify the location of the REGEX_LIST file
