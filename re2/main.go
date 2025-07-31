@@ -41,7 +41,7 @@ func Usage(code int, msg string) {
 	text := `
 
  NAME
-	re2 - run a list of PCRE regexes across a data set
+	re2 - run a list of RE2 regexes across a data set
 
  SYNOPSIS
 	re2 --regex REGEX_LIST --data FILE [ --alpha | --desc ] [ --dumpreg REGEX_NAME ] [ --unmatch FILE ]
@@ -77,6 +77,9 @@ func Usage(code int, msg string) {
 		Display this usage text and exit
 	-version
 		Display the program version and exit
+
+SEE ALSO
+	https://github.com/google/re2/wiki/syntax
 
 `
 	fmt.Println(text)
