@@ -83,7 +83,6 @@ SEE ALSO
 
 `
 	fmt.Println(text)
-	flag.PrintDefaults()
 	os.Exit(code)
 }
 
@@ -227,6 +226,8 @@ NEXT_LINE:
 	}
 
 	fmt.Printf("SUMMARY\n\n")
+	fmt.Printf("regex list : %s\n", *_regex)
+	fmt.Printf("  data set : %s\n", *_data)
 	fmt.Printf("  run date : %20s\n", time.Now().UTC().Format(time.RFC3339))
 	fmt.Printf("%10.6f : elapsed (seconds)\n", elapsed.Seconds())
 	fmt.Printf("%10d : data lines read in\n", lineCount)
